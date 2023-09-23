@@ -1,0 +1,495 @@
+---
+title: "Terrorismo"
+author: "Martin Pipan"
+output:
+  ioslides_presentation:
+    css: ./style.css
+    incremental: yes
+  slidy_presentation:
+    incremental: yes
+  beamer_presentation:
+    incremental: yes
+editor_options:
+  chunk_output_type: inline
+---
+
+<style>
+body {
+text-align: justify}
+</style>
+
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
+```
+
+## Introduzione
+
+Lo scopo di questo progetto è di analizzare alcuni aspetti connessi al fenomeno del terrorismo, che ha come obbiettivo quello di incutere terrore nei membri di una società e/o di influenzare scelte politiche di un paese/organizzaione.
+
+Questo fenomeno ha avuto una recente recrudescenza anche in Europa ove alcuni paesi come p.e. la Francia, sono stati pesantemente colpiti. 
+
+Il terrorismo ha avuto pesanti ricadute anche in Italia nei c.d. anni di piombo, nei quali persero la vita molte persone e molte altre rimasero ferite e segnate. 
+
+
+
+```{r iibraries, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+library(readr)
+library(tidyr)
+library(dplyr)
+
+library(ggplot2)
+library(viridis)
+library(hrbrthemes)
+library(plotly)
+
+
+library(mapview)
+library(ISOcodes)
+library(viridisLite)
+library(highcharter)
+library(leaflet)
+
+library(tm)
+library(wordcloud2)
+library(RColorBrewer)
+
+
+```
+## Obiettivi dell'analisi
+
+Nel progetto saranno esaminati i seguenti aspetti legati al terrorismo:
+
+* __Distribuzione degli attacchi terroristici__
+* __Andamento temporale degli attacchi terroristici__
+* __Analisi dei gruppi terroristici più attivi tra il 2012 ed il 2017__
+* __Parole usate nei riepiloghi degli attacchi__
+* __Mappa degli attacchi terroristici consumati in Italia__
+* __Caso di studio degli attacchi terroristici avvenuti in Italia ed in Francia__
+
+
+## Dataset
+
+Il dataset in analisi è stato reperito sulla piattaforma Kaggle al seguente indirizzo[Global Terrorism Database](https://www.kaggle.com/datasets/START-UMD/gtd). Il dataset raccoglie oltre 100 variabili tra cui anno, giorno, vittime ed altri dati su oltre 180 mila attacchi terroristici compiuti a livello globale tra il 1970 ed il 2017. In questo arco temporale, non sono stati censiti dati per l'anno 1993. 
+
+
+```{r dataset, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+df <- read_csv("globalterrorismdb_0718dist.csv")
+
+
+ terrorismo <- df %>%
+   select("eventid", "iyear", "imonth", "iday", "country_txt", "region_txt", "provstate", "city", "latitude", "longitude", "location", "summary", "attacktype1_txt", "targtype1_txt", "targsubtype1_txt", "corp1", "target1", "natlty1_txt", "gname", "motive", "weaptype1_txt", "weapsubtype1_txt", "weapsubtype2_txt", "nkill", "nwound") %>%
+      rename(ID = eventid,
+          Year= iyear ,
+          Month = imonth,
+          Day = iday,  
+          Country = country_txt,
+          Region = region_txt,
+          Province =  provstate,
+          City = city,
+          Latitude  = latitude,
+          Longitude  = longitude,
+          Location = location,
+          Summary = summary,
+          Attack_type = attacktype1_txt, 
+          Target_type  = targtype1_txt,
+          Target_subtype = targsubtype1_txt, 
+          Corporation =  corp1, 
+          Target =  target1 ,
+          Target_nationality =  natlty1_txt,
+          Group = gname ,
+          Motive = motive, 
+          Weapon_type  = weaptype1_txt , 
+          Weapon_subtype1 =  weapsubtype1_txt,
+          Weapon_subtype2 = weapsubtype2_txt,
+          Killed = nkill, 
+          Wounded =  nwound)
+ 
+```
+## Mappa mondiale degli attacchi terroristici
+
+I paesi maggiormenti colpiti a livello mondiale sono in ordine decrescente: l'Iraq, il Pakistan, l'Afghanistan e l'India. 
+
+```{r worldmap, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+worldmap <- terrorismo %>%
+  group_by(Country) %>%
+  summarise(Total = round(n())) %>%
+  ungroup()
+
+worldmap <- worldmap %>%
+  rename(country.name = Country,
+         total = Total)
+
+# Get iso3 data
+
+ISO3 <- ISO_3166_1 %>%
+  select(Name, Alpha_3) %>%
+  rename(iso3 = Alpha_3)
+
+# let's find conflicts
+countriesToFix <- anti_join(worldmap, ISO3, by = c("country.name" = "Name"))
+
+# fixing
+
+worldmap[worldmap == "Bolivia"] <- "Bolivia, Plurinational State of"
+worldmap[worldmap == "East Timor"] <- "Timor-Leste"
+worldmap[worldmap == "Falkland Islands"] <- "Falkland Islands (Malvinas)"
+worldmap[worldmap == "Iran"] <- "Iran, Islamic Republic of"
+worldmap[worldmap == "Ivory Coast"] <- "Côte d'Ivoire"
+worldmap[worldmap == "Laos"] <- "Lao People's Democratic Republic"
+worldmap[worldmap == "Macau"] <- "Macao"
+worldmap[worldmap == "Moldova"] <- "Moldova, Republic of"
+worldmap[worldmap == "North Korea"] <- "Korea, Democratic People's Republic of"
+worldmap[worldmap == "South Korea"] <- "Korea, Republic of"
+worldmap[worldmap == "St. Kitts and Nevis"] <- "Saint Kitts and Nevis"
+worldmap[worldmap == "St. Lucia"] <- "Saint Lucia"
+worldmap[worldmap == "Swaziland"] <- "Eswatini"
+worldmap[worldmap == "Syria"] <- "Syrian Arab Republic"
+worldmap[worldmap == "Taiwan"] <- "Taiwan, Province of China"
+worldmap[worldmap == "Tanzania"] <- "Tanzania, United Republic of"
+worldmap[worldmap == "Vatican City"] <- "Holy See (Vatican City State)"
+worldmap[worldmap == "Venezuela"] <- "Venezuela, Bolivarian Republic of"
+worldmap[worldmap == "West Bank and Gaza Strip"] <- "Palestine, State of"
+
+
+# fixing
+
+ worldmap <-  worldmap[-c(8,11,22,38,39,42,43,44,56,66,67,95,97,99,104,107,119,133,139,145,146,148,152,153,157,158,164,165,196,199,201,203,205),]
+
+ 
+ dfFix <- data.frame (country.name = c("Czechia", "Germany", "Kosovo", "North Macedonia", "Congo", "Zimbabwe",  "Russian Federation", "Serbia", "Montenegro","Slovakia","Bosnia and Herzegovina","Viet Nam","Yemen","Croatia", "Slovenia","Armenia","Azerbaijan","Estonia","Georgia","Kyrgyzstan","Latvia","Lithuania","Congo, The Democratic Republic of the"),
+                  total = c(40,1314,307,119,40,184,2210,79,10,19,168,13,3355,69,7,33,47,19,219,36,23,13,825)
+                  )
+ 
+ worldmap <- rbind(worldmap, dfFix)
+ 
+
+# join between our df and ISO3 data
+worldmap <- left_join(worldmap, ISO3, by = c("country.name" = "Name")) 
+
+# Buiding the map
+data(worldgeojson, package = "highcharter")
+
+dshmstops <- data.frame(q = c(0, exp(1:5)/exp(5)),
+                        c = substring(viridis(5 + 1, option = "D"), 0, 7)) %>%  
+  list_parse2()
+
+highchart() %>% #from highchart package
+            hc_add_series_map(worldgeojson, df = worldmap,
+                              value = "total", joinBy = "iso3") %>% 
+            hc_colorAxis(stops = dshmstops) %>% 
+            hc_legend(enabled = TRUE) %>% 
+            hc_add_theme(hc_theme_db()) %>% 
+            hc_mapNavigation(enabled = TRUE) %>%
+            hc_add_theme(hc_theme_google()) 
+
+```
+
+
+
+```{r attackdistrib, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+dat_f <- terrorismo %>%
+         group_by(Year,Country,Region) %>%
+         summarize(Total=n())
+
+global_attack <- dat_f %>%
+                 group_by(Year) %>%
+                 summarise(Total=sum(Total)) 
+
+# Buiding the plot
+plot1 <- plot_ly(global_attack,  x = ~Year, y = ~Total, type= "bar",
+              marker= list(colorscale = list(c(0,1), c("lawngreen", "red"))),
+              colorbar= list(title = "Year",
+                                      len = .4, outlinewidth = 0,
+                                      tickformat = ".2f",
+                                      tick0 = 1970, dtick = 5),
+                           color= ~Year) %>%
+              layout(title = 'Global attacks number from 1970 to 2017', plot_bgcolor = "#e5ecf6",
+                     xaxis = list(title = 'Year', 
+                     range = c(1970, 2017), tickvals = seq(1970, 2017, 1)), 
+                     yaxis = list(title = 'Attack Number')) %>%
+              hide_colorbar()
+
+```
+
+## Distribuzione temporale degli attacchi terroristici
+
+Di seguito è visibile, che il numero di attacchi terroristici è cresciuto notevolmente dopo l'anno 2011, raggiungendo quasi 17000 attacchi all'anno durante il 2014. Nel 2014, infatti, si sono registrati più del triplo degli attacchi registrati nel 2011. Cerchiamo di capirne il motivo andando ad isolare i gruppi terrostici più attivi tra il 2012 ed il 2017.
+```{r plot1, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot1 
+```
+
+
+
+```{r terrorgroups, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+# Remove Unknown data from dataset
+dat_g <- terrorismo %>%
+         filter(Year >= 2012) %>%
+         select(Year, Group, Country) %>%
+         mutate(Group = na_if(Group, "Unknown")) %>%
+         na.omit()
+
+dat_g1 <- dat_g %>%
+          group_by(Year,Group) %>%
+          summarize(Total=n())
+
+dat_g2 <- dat_g1 %>%
+                 group_by(Year, Group) %>%
+                 summarise(Total=sum(Total)) %>%
+                 top_n(5)
+
+global_attack_by_group <- dat_g2[, c(2,1,3)] %>%
+                          pivot_wider(names_from = Group, values_from = Total)
+
+colnames(global_attack_by_group)[2] =  "Al_Qaida_Iraq" 
+colnames(global_attack_by_group)[3] =  "AQAP" 
+colnames(global_attack_by_group)[4] =  "Al_Shabaab"
+colnames(global_attack_by_group)[5] =  "Boko_Haram"
+colnames(global_attack_by_group)[7] =  "ISIL"
+colnames(global_attack_by_group)[8] =  "NPA"
+colnames(global_attack_by_group)[9] =  "Donetsk_People_Republic"
+colnames(global_attack_by_group)[10] = "Ansar_Allah"
+colnames(global_attack_by_group)[11] = "PKK"
+
+# Buiding the plot
+
+plot2 <- plot_ly(global_attack_by_group, x = ~Year, y = ~Al_Qaida_Iraq, type = 'bar', name = 'Al-Qaida-Iraq')
+plot2 <- plot2 %>% add_trace(y = ~AQAP, name = 'AQAP')
+plot2 <- plot2 %>% add_trace(y = ~Al_Shabaab, name = 'Al-Shabaab')
+plot2 <- plot2 %>% add_trace(y = ~Boko_Haram, name = 'Boko-Haram')
+plot2 <- plot2 %>% add_trace(y = ~Taliban, name = 'Taliban')
+plot2 <- plot2 %>% add_trace(y = ~ISIL, name = 'ISIL')
+plot2 <- plot2 %>% add_trace(y = ~NPA, name = 'NPA')
+plot2 <- plot2 %>% add_trace(y = ~Donetsk_People_Republic, name = 'Donetsk-People-Republic')
+plot2 <- plot2 %>% add_trace(y = ~Ansar_Allah, name = 'Ansar-Allah')
+plot2 <- plot2 %>% add_trace(y = ~PKK, name = "PKK")
+plot2 <- plot2 %>% layout(yaxis = list(title = 'Attack Number'), barmode = 'stack')
+plot2 <- plot2 %>% layout(legend=list(title=list(text='Groups')))
+plot2 <- plot2 %>%layout(title = 'Most active 5 terrorist groups from 2012 to 2017', plot_bgcolor = "#e5ecf6")
+
+
+```
+## Analisi dei gruppi terroristici più attivi tra il 2012 ed il 2017
+
+Dal grafico notiamo, che i 5 gruppi terroristici più attivi per ciascun anno in analisi, sono quasi per la totalità gruppi riconducubuli al terrorismo di matrice islamica. Notiamo, che dal 2013 è cresciuto notevolmente il numero di attacchi perpetrati dall'ISIL (Islamic State of Iraq and the Levant), gruppo molto attivo nel reclutamento di proseliti al fine di commettere attacchi terrostici all'estero e/o al fine di ingrandire le proprie milizie disclocate in Siria ed Iraq (c.d. Foreign Fighters). Va riportato, inoltre, che il 29 giugno 2014, venne proclamato il califfato dello Stato Islamico, dando ancora più credito e forza nel reclutamento di nuovi militanti. 
+
+```{r plot2, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot2 
+
+```
+
+## Wordcloud
+Nel sottostante wordcloud vengono evidenziate le parole più usate nei riepiloghi degli attacchi terroristici, corredate dalle relative frequenze.
+
+```{r wordcloud, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+summary_text <- terrorismo %>%
+        filter(!is.na(Summary)) 
+
+summary_text1 <- summary_text %>%
+        filter(Summary != "")
+
+text <- sample(summary_text1$Summary, nrow(summary_text1)/30)
+
+docs <- Corpus(VectorSource(text))
+
+# Tidy text
+
+docs <- docs %>%
+  tm_map(removeNumbers) %>%
+  tm_map(removePunctuation) %>%
+  tm_map(stripWhitespace)
+docs <- tm_map(docs, content_transformer(tolower))
+docs <- tm_map(docs, removeWords, stopwords("english"))
+
+# Document term matrix
+
+dtm <- TermDocumentMatrix(docs) 
+matrix <- as.matrix(dtm) 
+words <- sort(rowSums(matrix),decreasing=TRUE) 
+dfword <- data.frame(word = names(words),freq=words)
+
+#Wordcloud 
+
+wordcloud2(dfword, size=0.5, shape = "diamond", color='random-light', backgroundColor="black")
+
+```
+
+
+```{r itamap, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+terrorismo_italia <- terrorismo %>%
+  filter(Country == "Italy")
+
+# Building the map
+
+mapIT <- leaflet() %>% 
+  addTiles('http://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}.png',
+  attribution='Map tiles by 
+    <a href="http://stamen.com">Stamen Design</a>, 
+    <a href="http://creativecommons.org/licenses/by/3.0">CC BY 3.0</a> 
+    &mdash; Map data &copy; 
+    <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>') %>%
+  setView(12, 41, zoom= 4) %>% 
+  addCircles (data=terrorismo_italia, lat= ~Latitude, lng = ~Longitude, 
+              popup=paste(
+                "<strong>Year: </strong>", terrorismo_italia$Year,
+                "<br><strong>City: </strong>", terrorismo_italia$City, 
+                "<br><strong>Country: </strong>", terrorismo_italia$Country, 
+                "<br><strong>Attack type: </strong>", terrorismo_italia$Attack_type, 
+                "<br><strong>Group: </strong>", terrorismo_italia$Group),
+              weight = 0.9, color="#8B1A1A", stroke = TRUE, fillOpacity = 0.6)
+
+mapIT
+
+```
+
+## Mappa degli attachi terroristici perpetrati in Italia
+
+```{r mapIT, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+mapIT
+```
+
+## Caso di studio
+
+Nei seguenti grafici, vengono messe a confronto alcune caratteristiche degli attacchi terroristici perpetrati in Francia ed in Italia, al fine di evidenziare eventuali similitudini o differenze. In particolare, verranno esaminati i seguenti aspetti:
+
++ __Andamento degli attacchi terroristici nei due paesi dal 1970 al 2017__
++ __Gruppi terroristici più attivi__
++ __Tipologia attacchi__
+
+
+
+```{r itafraattack, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+terrorism_itafra_attacks <- terrorismo %>%
+    select(Year, Country) %>%
+    filter (Country %in% c("Italy","France")) %>%
+    group_by(Year, Country) %>%
+    summarize(Total=n()) %>%
+    ungroup()
+
+#Building the plot 
+
+plot4 <- ggplot(data = terrorism_itafra_attacks, aes(x = Year, y = Total, colour = Country)) +       
+         geom_line() + 
+         geom_point() + 
+         theme_bw() + 
+         labs(y="Total Attacks", title="Terrorist attacks in Italy and France from 1970 to 2017") + 
+         theme(plot.title = element_text(hjust = 0.5))
+
+```
+## Andamento temporale degli attacchi
+
+```{r plot4, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot4
+
+```
+
+
+```{r itagroups, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+terrorism_ita <- terrorismo %>%
+    filter (Country == "Italy") %>%
+    select(Group, Country) %>%
+    mutate(Group = na_if(Group, "Unknown")) %>%
+    na.omit() %>%
+    group_by(Group, Country) %>%
+    summarize(Total=n()) %>%
+    ungroup()
+
+terrorism_ita_groups <- terrorism_ita %>%
+  filter(Total >20)
+
+# Building the plot
+
+plot5 <- ggplot(terrorism_ita_groups,aes(x=reorder(Group, +Total), y=Total, fill=Group))+
+          geom_bar(stat="identity") +
+          theme(axis.text.x = element_blank()) + 
+          labs(x="Groups", y="Total Attacks", title="Most active terrorist groups in Italy") + 
+          theme(plot.title = element_text(hjust = 0.5))
+```
+## Gruppi terroristici in Italia
+
+Notiamo, che la stragrande maggioranza dei gruppi più prolifici è da ricondurre ai gruppi di estrema sinistra. Il Baader-Meinhof Group era un gruppo di estrema sinistra operante in Germania, con affinità politiche con le Brigate Rosse. 
+
+```{r plot5, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot5
+
+```
+
+```{r fragroups, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+terrorism_fra <- terrorismo %>%
+    filter (Country == "France") %>%
+    select(Group, Country) %>%
+    mutate(Group = na_if(Group, "Unknown")) %>%
+    na.omit() %>%
+    group_by(Group, Country) %>%
+    summarize(Total=n()) %>%
+    ungroup()
+
+terrorism_fra_groups <- terrorism_fra %>%
+  filter(Total > 53)
+
+# Building the plot
+
+plot6 <- ggplot(terrorism_fra_groups,aes(x=reorder(Group, +Total), y=Total, fill=Group))+
+        geom_bar(stat="identity") +
+        theme(axis.text.x = element_blank()) + 
+        labs(x="Groups", y="Total Attacks", title="Most active terrorist groups in France") + 
+        theme(plot.title = element_text(hjust = 0.5))
+```
+## Gruppi terroristici in Francia
+
+A differenza dell'Italia, i gruppi terroristici più attivi in Francia appartengono all'area separatista e nello specifico quelli che chiedono uno Stato Indipendente per la Corsica ed il conseguente distacco dell'isola dalla Francia.
+
+```{r plot6, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot6
+
+```
+
+
+```{r typeattacks, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
+
+terrorism_itafra_typeattacks <- terrorismo %>%
+    filter(Country %in% c("Italy", "France")) %>%
+    select(Attack_type, Country) %>%
+    mutate(Attack_type = na_if(Attack_type, "Unknown")) %>%
+    na.omit()
+    
+
+# Building the plot
+
+plot7 <- ggplot(terrorism_itafra_typeattacks,aes(x=Attack_type,color=Attack_type,fill=Attack_type))+
+          geom_bar(position = "dodge")+ 
+          facet_grid(~Country)+
+          scale_x_discrete() + 
+          theme(legend.position="bottom", legend.title=element_blank())+
+          scale_y_continuous("Number of attacks")+
+          theme(axis.title.x=element_blank(),
+              axis.text.x=element_blank(),
+              axis.ticks.x=element_blank())
+
+
+```
+
+## Tipologia attacchi
+
+```{r plot7, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+
+plot7
+
+```
+
+
+
