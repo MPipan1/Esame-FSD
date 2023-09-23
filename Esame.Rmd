@@ -345,8 +345,10 @@ mapIT <- leaflet() %>%
                 "<br><strong>Group: </strong>", terrorismo_italia$Group),
               weight = 0.9, color="#8B1A1A", stroke = TRUE, fillOpacity = 0.6)
 
+mapIT <- mapshot(mapIT, url = paste0(getwd(), "/map.html"))
 
 
+mapIT <- htmltools::tags$iframe(title = "Map", src = "map.html")
 
 
 ```
@@ -364,7 +366,7 @@ Nei seguenti grafici, vengono messe a confronto alcune caratteristiche degli att
 
 + __Andamento degli attacchi terroristici nei due paesi dal 1970 al 2017__
 + __Gruppi terroristici più attivi__
-+ __Tipologia attacchi__
++ __Tipologia di attacchi__
 
 
 
@@ -485,7 +487,7 @@ plot7 <- ggplot(terrorism_itafra_typeattacks,aes(x=Attack_type,color=Attack_type
 
 ```
 
-## Tipologia attacchi
+## Tipologia di attacchi
 
 ```{r plot7, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
 
