@@ -1,0 +1,16 @@
+readr
+tidyr
+dplyr
+ggplot2
+viridisLite
+viridis
+hrbrthemes
+plotly
+mapview
+ISOcodes
+highcharter
+leaflet
+NLP
+tm
+wordcloud2
+RColorBrewer
