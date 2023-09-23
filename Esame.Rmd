@@ -1,16 +1,17 @@
 ---
 title: "Terrorismo"
 author: "Martin Pipan"
-output:
-  ioslides_presentation:
+output: 
+  ioslides_presentation: 
     css: ./style.css
-    incremental: yes
+    widescreen: yes
   slidy_presentation:
     incremental: yes
   beamer_presentation:
     incremental: yes
 editor_options:
   chunk_output_type: inline
+    
 ---
 
 <style>
@@ -25,7 +26,7 @@ knitr::opts_chunk$set(cache = TRUE, message = FALSE, warning = FALSE)
 
 ## Introduzione
 
-Lo scopo di questo progetto è di analizzare alcuni aspetti connessi al fenomeno del terrorismo, che ha come obbiettivo quello di incutere terrore nei membri di una società e/o di influenzare scelte politiche di un paese/organizzaione.
+Lo scopo di questo progetto è quello di analizzare alcuni aspetti connessi al fenomeno del terrorismo, che ha come obbiettivo quello di incutere terrore nei membri di una società e/o di influenzare scelte politiche di un paese/organizzaione.
 
 Questo fenomeno ha avuto una recente recrudescenza anche in Europa ove alcuni paesi come p.e. la Francia, sono stati pesantemente colpiti. 
 
@@ -33,7 +34,7 @@ Il terrorismo ha avuto pesanti ricadute anche in Italia nei c.d. anni di piombo,
 
 
 
-```{r iibraries, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
+```{r libraries, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 library(readr)
 library(tidyr)
 library(dplyr)
@@ -70,7 +71,7 @@ Nel progetto saranno esaminati i seguenti aspetti legati al terrorismo:
 
 ## Dataset
 
-Il dataset in analisi è stato reperito sulla piattaforma Kaggle al seguente indirizzo[Global Terrorism Database](https://www.kaggle.com/datasets/START-UMD/gtd). Il dataset raccoglie oltre 100 variabili tra cui anno, giorno, vittime ed altri dati su oltre 180 mila attacchi terroristici compiuti a livello globale tra il 1970 ed il 2017. In questo arco temporale, non sono stati censiti dati per l'anno 1993. 
+Il dataset in analisi è stato reperito sulla piattaforma Kaggle al seguente indirizzo [Global Terrorism Database](https://www.kaggle.com/datasets/START-UMD/gtd). Il dataset raccoglie oltre 100 variabili tra cui anno, giorno, vittime ed altri dati su oltre 180 mila attacchi terroristici compiuti a livello globale tra il 1970 ed il 2017. In questo arco temporale, non sono stati censiti dati per l'anno 1993. 
 
 
 ```{r dataset, echo=FALSE, message=FALSE, warning=FALSE, paged.print=FALSE}
@@ -217,7 +218,7 @@ plot1 <- plot_ly(global_attack,  x = ~Year, y = ~Total, type= "bar",
 
 ## Distribuzione temporale degli attacchi terroristici
 
-Di seguito è visibile, che il numero di attacchi terroristici è cresciuto notevolmente dopo l'anno 2011, raggiungendo quasi 17000 attacchi all'anno durante il 2014. Nel 2014, infatti, si sono registrati più del triplo degli attacchi registrati nel 2011. Cerchiamo di capirne il motivo andando ad isolare i gruppi terrostici più attivi tra il 2012 ed il 2017.
+
 ```{r plot1, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
 
 plot1 
@@ -276,7 +277,6 @@ plot2 <- plot2 %>%layout(title = 'Most active 5 terrorist groups from 2012 to 20
 ```
 ## Analisi dei gruppi terroristici più attivi tra il 2012 ed il 2017
 
-Dal grafico notiamo, che i 5 gruppi terroristici più attivi per ciascun anno in analisi, sono quasi per la totalità gruppi riconducubuli al terrorismo di matrice islamica. Notiamo, che dal 2013 è cresciuto notevolmente il numero di attacchi perpetrati dall'ISIL (Islamic State of Iraq and the Levant), gruppo molto attivo nel reclutamento di proseliti al fine di commettere attacchi terrostici all'estero e/o al fine di ingrandire le proprie milizie disclocate in Siria ed Iraq (c.d. Foreign Fighters). Va riportato, inoltre, che il 29 giugno 2014, venne proclamato il califfato dello Stato Islamico, dando ancora più credito e forza nel reclutamento di nuovi militanti. 
 
 ```{r plot2, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
 
@@ -345,13 +345,15 @@ mapIT <- leaflet() %>%
                 "<br><strong>Group: </strong>", terrorismo_italia$Group),
               weight = 0.9, color="#8B1A1A", stroke = TRUE, fillOpacity = 0.6)
 
-mapIT
+
+
+
 
 ```
 
 ## Mappa degli attachi terroristici perpetrati in Italia
 
-```{r mapIT, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
+```{r, width = 30, height = 30, echo=FALSE}
 
 mapIT
 ```
@@ -418,7 +420,7 @@ plot5 <- ggplot(terrorism_ita_groups,aes(x=reorder(Group, +Total), y=Total, fill
 ```
 ## Gruppi terroristici in Italia
 
-Notiamo, che la stragrande maggioranza dei gruppi più prolifici è da ricondurre ai gruppi di estrema sinistra. Il Baader-Meinhof Group era un gruppo di estrema sinistra operante in Germania, con affinità politiche con le Brigate Rosse. 
+Notiamo, che la stragrande maggioranza dei gruppi più prolifici è da ricondurre ai gruppi di estrema sinistra. 
 
 ```{r plot5, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
 
