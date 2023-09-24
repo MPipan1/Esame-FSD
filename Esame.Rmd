@@ -422,7 +422,7 @@ plot5 <- ggplot(terrorism_ita_groups,aes(x=reorder(Group, +Total), y=Total, fill
 ```
 ## Gruppi terroristici in Italia
 
-Notiamo, che la stragrande maggioranza dei gruppi più prolifici è da ricondurre ai gruppi di estrema sinistra. 
+Notiamo, che la stragrande maggioranza dei gruppi più prolifici sono da ricondurre all'area di estrema sinistra. 
 
 ```{r plot5, echo=FALSE, message=FALSE, warning=FALSE, include=TRUE, paged.print=FALSE}
 
